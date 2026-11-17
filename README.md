@@ -1,102 +1,125 @@
-# Yelpi Android
+# Yelpi React Native
 
-**Currently in active development.**
+A React Native mobile app with account registration, sign-in, and a guided patient intake flow. The repository contains native Android and iOS projects; its internal application name is `helpandroid`. The interface includes English and Portuguese text.
 
-> A React Native front end to a healthcare app wherein a caretaker can register patients they care for, along with their health data inputs, i.e. medication, blood pressure, mental state, physical state, and medical condition, among others. The patient profile information could be shared with a family member or a doctor by means of a link or access token.
+![App preview](screenshots/cover.png)
 
-![Revise New Patient Screen](https://github.com/adriaanbd/yelpi-android/blob/development/screenshots/cover.png)
+## Features
 
-## Built With
+- Register an account, sign in, and sign out.
+- Persist authentication tokens with AsyncStorage and restore a session at startup.
+- Collect patient details through a step-by-step form, including name, birth date, weight, gender, mental state, relationship, general health, and physicians.
+- Review patient information and submit it to the backend API.
 
-- React Native
-- React Native Elements
-- React Navigation
-- Redux
-- Thunk
-- Axios
-- JWT
-- UUID Random
+The app is a work in progress: the home screen is minimal, and parts of the patient review form contain placeholder or unfinished editing behavior.
 
-## Live Demo
+## Technology
 
-Since this is an Android mobile app, there is no live demo available. We'd have to create an Expo alternative to do this and all of our efforts are directed towards pushing an MVP.
+- React 16.11.0 and React Native 0.62.2
+- React Navigation 4 with stack and switch navigators
+- Redux, React Redux, and Redux Thunk
+- Axios and JWT decoding
+- React Native Elements and React Native Vector Icons
+- Jest and ESLint
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
-Please follow the steps detailed in the React Native documentation [Setting up the development environment](https://reactnative.dev/docs/environment-setup) to obtain and configure:
+- Node.js and npm, or Yarn.
+- For Android: a compatible JDK, Android SDK, and an emulator or connected device.
+- For iOS: macOS, Xcode, CocoaPods, and a simulator or connected device.
+- A running backend compatible with the API described below.
 
-- React Native CLI
-- Java Development Kit
-- Android Development Environment
+This repository uses a legacy native toolchain. Android is configured for SDK 28, Build Tools 28.0.3, Android Gradle Plugin 3.5.2, and Gradle 6.0.1. The iOS Podfile declares iOS 9.0 and includes Flipper 0.33.x. Compatibility with current development tools has not been verified; the repository does not pin Node.js or JDK versions.
 
-### Setup
+### Install dependencies
 
-```bash
-$ git clone https://github.com/adriaanbd/yelpi-android.git
-$ cd yelpi-android
+From the repository root:
+
+```sh
+npm install
 ```
 
-### Install
+`src/utils/api.js` imports `moment`, but `package.json` does not declare it directly. Add it if it is not already available through the dependency tree:
 
-```bash
-$ git checkout development
-$ npm i
+```sh
+npm install moment
 ```
 
-### Usage
+Both `package-lock.json` and `yarn.lock` are present. The commands here use npm; use one package manager consistently when updating dependencies.
 
-#### Development server
+For iOS, also install native dependencies:
 
-```bash
-$ npm start --reset-cache
-```
-#### Android emulator
-
-```bash
-$ npm run android
+```sh
+cd ios
+pod install
+cd ..
 ```
 
-### Run tests
+### Configure the API
 
-There are no tests at the moment; however, they will be added later.
+Edit `baseUrl` in [`src/utils/api.js`](src/utils/api.js) to point to your backend. Its checked-in value is `https://mighty-ocean-68056.herokuapp.com`; availability of that deployment has not been verified. There is no environment-variable configuration in the current API helper.
 
-## Authors
+The client calls these endpoints:
 
-### Adriaan Beiertz
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/v1/users` | Register a user; sends `{user: signupData}`. |
+| `POST` | `/v1/sessions` | Sign in; sends the login form data. |
+| `GET` | `/v1/users/:id` | Retrieve the authenticated user's data. |
+| `POST` | `/v1/patients` | Create a patient; sends `{patient: patientData}`. |
 
-- GitHub: [@adriaanbd](https://github.com/adriaanbd)
-- Twitter: [@abeiertz](https://twitter.com/abeiertz)
-- LinkedIn: [adriaanbd](https://www.linkedin.com/in/adriaanbd/)
+Authentication responses are expected to include `token` and `user`. The client stores the token under the AsyncStorage key `token`, reads its `id` and `exp` JWT claims, and attaches it to authorized requests as `Authorization: Bearer <token>`.
 
-### Ryan Vergara
+When using a local backend, choose an address reachable from the emulator or physical device.
 
-- GitHub: [@rvvergara](https://github.com/rvvergara)
-- Twitter: [@CoachRyanV](https://twitter.com/CoachRyanV)
-- LinkedIn: [rvvergara](https://www.linkedin.com/in/rvvergara/)
+### Run the app
 
-## Contributing
+Start Metro:
 
-Contributions, issues and feature requests are welcome.
+```sh
+npm start
+```
 
-Feel free to check the issues page [here](https://github.com/adriaanbd/yelpi-android/issues).
+In a separate terminal, launch Android:
 
-Guidelines:
+```sh
+npm run android
+```
 
-Suggest changes by making a pull request from your repository towards this one. 
+Or launch iOS on macOS:
 
-1. Fork the project into your repository
-2. Clone your repository to have it locally
-3. Add this repository as remote: `$ git remote add upstream https://github.com/adriaanbd/yelpi-android.git`
-4. Check that you've added it correctly: `$ git remote -v`
-5. Always sync your local repository with this one: `$ git fetch upstream` 
-6. Merge the changes from upstream into your local master branch `$ git merge upstream/dev`
-7. Push the changes from previous step `$ git push`
+```sh
+npm run ios
+```
 
-The development branch is the default branch and has the latest version of the project in development. 
-The master branch will only be used for production releases.
+## Development commands
 
-## Acknowledgements
+| Command | Description |
+| --- | --- |
+| `npm start` | Start the Metro development server. |
+| `npm run android` | Build and launch the Android app. |
+| `npm run ios` | Build and launch the iOS app. |
+| `npm test` | Run Jest; the repository includes an app render test. |
+| `npm run lint` | Run ESLint. |
 
-Designed by [Henrique Sambi](https://www.linkedin.com/in/henrique-sambi/).
+## Project structure
+
+```text
+App.js                 Navigation configuration and Redux provider
+src/
+  components/          Shared UI, authentication forms, and patient inputs
+  screens/             Authentication, session resolution, home, and patient screens
+  store/
+    actions/           Redux action creators and action types
+    reducers/          User, patient, form field, and error state
+    thunks/            Authentication and patient API operations
+  utils/               API helpers, navigation reference, and formatting helpers
+android/               Native Android project
+ios/                   Native iOS project
+__tests__/             Jest tests
+screenshots/           App preview image
+```
+
+The backend source is not included in this repository. Authentication and patient submission require a compatible backend, and patient submission errors are currently logged rather than displayed in the UI.
